@@ -12,7 +12,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/courses/', include('courses.urls')),
     path('api/enrollment-requests/', include('enrollments.urls')),
-    path('api/modules/', include('modules.urls')),
+    path('api/modules/', include('modules.urls')),  # Include notes URLs in modules.urls
     path('api/quizzes/', include('quizzes.urls')),
     path('api/discussions/', include('discussions.urls')),
     path('api/chat/', include('chat.urls')),

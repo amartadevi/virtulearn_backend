@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'discussions',
     'chat',
     'enrollments',
+    'notes',
 ]
 
 REST_FRAMEWORK = {
