@@ -1,3 +1,4 @@
+# courses/serializers.py
 from rest_framework import serializers
 from .models import Course
 from users.models import User
@@ -10,7 +11,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'code', 'description', 'created_by', 'students', 'is_student', 'is_teacher']
+        fields = ['id', 'name', 'code', 'description', 'created_by', 'students', 'is_student', 'is_teacher', 'image']
         read_only_fields = ['code']
 
     def get_created_by(self, obj):
@@ -36,3 +37,13 @@ class CourseSerializer(serializers.ModelSerializer):
             students = validated_data.pop('students')
             instance.students.set(students)
         return super().update(instance, validated_data)
+    
+
+    def validate(self, data):
+        name = data.get('name')
+        description = data.get('description')
+
+        if Course.objects.filter(name=name, description=description).exists():
+            raise serializers.ValidationError("A course with this name and description already exists.")
+
+        return data

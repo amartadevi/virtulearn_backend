@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.conf import settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +33,9 @@ ALLOWED_HOSTS = ['*','127.0.0.1','10.0.2.2']
 
 # Application definition
 
+
 INSTALLED_APPS = [
+    
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -48,7 +53,14 @@ INSTALLED_APPS = [
     'chat',
     'enrollments',
     'notes',
+    'results',
+    'chatbot',
+    
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -56,12 +68,28 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+
     ),
+    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # 'PAGE_SIZE': 10,
 }
 
 AUTH_USER_MODEL = 'users.User'
 
 SITE_ID = 1
+
+from datetime import timedelta
+...
+
+SIMPLE_JWT = {
+    "SIGNING_KEY": settings.SECRET_KEY,
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=50),
+    
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.TokenObtainPairSerializer",
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
