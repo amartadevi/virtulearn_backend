@@ -12,38 +12,33 @@ class ResultListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        quiz = self.get_quiz()
-        return Result.objects.filter(quiz=quiz)
-
-    def get_quiz(self):
-        try:
-            return Quiz.objects.get(pk=self.kwargs['quiz_pk'], module_id=self.kwargs['module_pk'])
-        except Quiz.DoesNotExist:
-            raise NotFound("Quiz not found.")
+        return Result.objects.filter(
+            quiz_id=self.kwargs['quiz_pk'],
+            quiz__module_id=self.kwargs['module_pk']
+        )
 
     def perform_create(self, serializer):
-        quiz = self.get_quiz()
-        score = self.calculate_score(quiz, self.request.user)
-        serializer.save(quiz=quiz, student=self.request.user, score=score)
+        quiz_content = self.request.data.get('quiz_content')
+        percentage = self.request.data.get('percentage')
+        
+        # Create the result
+        serializer.save(
+            quiz_id=self.kwargs['quiz_pk'],
+            student=self.request.user,
+            score=percentage,
+            answers=quiz_content  # Store the detailed answers
+        )
 
-    def calculate_score(self, quiz, student):
-        correct_answers = 0
-        total_questions = quiz.questions.count()
-        if total_questions == 0:
-            return 0
-        student_answers = StudentAnswer.objects.filter(question__quiz=quiz, student=student)
-        for answer in student_answers:
-            if answer.selected_option == answer.question.correct_answer:
-                correct_answers += 1
-        return (correct_answers / total_questions) * 100
-
-class ResultDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ResultDetailView(generics.RetrieveAPIView):
     serializer_class = ResultSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Result.objects.filter(quiz__module_id=self.kwargs['module_pk'])
-    
+        return Result.objects.filter(
+            quiz_id=self.kwargs['quiz_pk'],
+            quiz__module_id=self.kwargs['module_pk']
+        )
+
 # quizzes/views.py
 
 from rest_framework.response import Response

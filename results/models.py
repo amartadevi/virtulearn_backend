@@ -6,12 +6,16 @@ from django.utils import timezone
 # Renamed related_name to 'quiz_result_set'
 class Result(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='quiz_result_set')
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_result_set')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     score = models.DecimalField(max_digits=5, decimal_places=2)
+    answers = models.JSONField(default=dict)  # Store detailed answers
     date_taken = models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        unique_together = ['quiz', 'student']  # Prevent duplicate submissions
+
     def __str__(self):
-        return f'{self.student.username} - {self.quiz.title} - {self.score}'
+        return f'{self.student.username} - {self.quiz.title} - {self.score}%'
     
 from django.db import models
 from django.conf import settings

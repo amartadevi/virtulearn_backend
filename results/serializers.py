@@ -4,8 +4,8 @@ from .models import Result
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = Result
-        fields = ['id', 'quiz', 'student', 'score', 'date_taken']
-        read_only_fields = ['quiz', 'student', 'score']
+        fields = ['id', 'quiz', 'student', 'score', 'answers', 'date_taken']
+        read_only_fields = ['student', 'date_taken']
 
     def create(self, validated_data):
         return Result.objects.create(**validated_data)

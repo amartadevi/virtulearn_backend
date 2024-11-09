@@ -117,37 +117,94 @@ class AIQuizGenerateForMultipleNotesView(generics.CreateAPIView):
     serializer_class = QuizSerializer
 
     def post(self, request, module_pk):
-        note_ids = request.data.get("note_ids")  # Expecting a list of note IDs
+        note_ids = request.data.get("note_ids")
 
         if not note_ids:
-            return Response({"error": "No note IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "No note IDs provided."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             notes = Note.objects.filter(id__in=note_ids, module_id=module_pk)
 
             if not notes.exists():
-                return Response({"error": "No valid notes found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error": "No valid notes found."}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
+            # Get note titles
+            note_titles = [note.title for note in notes]
+            
             # Initialize the AI quiz manager
             ai_quiz_manager = AIQuizManager()
 
             # Combine contents of the notes
             combined_content = " ".join([note.content for note in notes])
 
-            # Generate quiz based on the combined content of the notes
+            # Generate quiz based on the combined content
             quiz_content = ai_quiz_manager.generate_quiz(combined_content)
 
-            # Create a new quiz for multiple notes
-            quiz = Quiz.objects.create(
-                module_id=module_pk,
-                title=f"Quiz for Module {module_pk}",
-                content=quiz_content,
-                created_by=request.user,
-                note="Multiple notes"  # Indicating multiple notes used
-            )
+            # Create a title that includes note names
+            quiz_title = f"Quiz on: {', '.join(note_titles)}"
 
-            return Response({"message": "Quiz for selected notes generated successfully."}, status=status.HTTP_201_CREATED)
+            return Response({
+                "title": quiz_title,
+                "content": quiz_content,
+                "quiz_content": quiz_content,
+                "note_ids": note_ids,
+                "note_titles": note_titles,
+                "is_ai_generated": True,
+            }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+class GeneratedQuizRetrieveView(generics.RetrieveAPIView):
+    serializer_class = QuizSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request, module_pk):
+        try:
+            # Get note_ids from query params
+            note_ids_str = request.GET.get('note_ids', '')
+            if not note_ids_str:
+                return Response(
+                    {"error": "note_ids parameter is required"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get the latest generated quiz for these notes
+            quiz = Quiz.objects.filter(
+                module_id=module_pk,
+                is_ai_generated=True,
+            ).latest('created_at')
+
+            if not quiz:
+                return Response(
+                    {"error": "No generated quiz found"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            return Response({
+                'title': quiz.title,
+                'content': quiz.content,
+                'quiz_content': quiz.content,  # For compatibility
+                'note_ids': note_ids_str,
+                'is_ai_generated': True,
+            })
+
+        except Quiz.DoesNotExist:
+            return Response(
+                {"error": "No generated quiz found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
