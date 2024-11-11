@@ -24,6 +24,7 @@ class QuizResult(models.Model):
     )
     completed_at = models.DateTimeField(auto_now_add=True)
     student_answers = models.JSONField(default=dict)
+    suggestions = models.JSONField(default=dict, blank=True)
 
     class Meta:
         db_table = 'result_quizresult'

@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 class QuizResultSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
+    suggestions = serializers.JSONField(required=False)
 
     class Meta:
         model = QuizResult
@@ -13,7 +14,7 @@ class QuizResultSerializer(serializers.ModelSerializer):
             'id', 'student', 'quiz', 'score', 
             'total_questions', 'percentage', 
             'completed_at', 'student_answers',
-            'student_name'
+            'student_name', 'suggestions'
         ]
         read_only_fields = ['id', 'completed_at']
 

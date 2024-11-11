@@ -1,5 +1,16 @@
 from django.urls import path
-from .views import QuizListCreateView, QuizDetailView, QuestionListCreateView, QuestionDetailView, StudentAnswerListCreateView,AIQuizGenerateForNoteView,AIQuizGenerateForMultipleNotesView,GeneratedQuizRetrieveView
+from .views import (
+    QuizListCreateView, 
+    QuizDetailView, 
+    QuestionListCreateView, 
+    QuestionDetailView, 
+    StudentAnswerListCreateView,
+    AIQuizGenerateForNoteView,
+    AIQuizGenerateForMultipleNotesView,
+    GeneratedQuizRetrieveView,
+    QuizRelatedNotesView
+)
+
 urlpatterns = [
     path('<int:module_pk>/quizzes/', QuizListCreateView.as_view(), name='quiz-list-create'),
     path('<int:module_pk>/quizzes/<int:pk>/', QuizDetailView.as_view(), name='quiz-detail'),
@@ -9,5 +20,8 @@ urlpatterns = [
     path('<int:module_pk>/notes/<int:note_pk>/generate-quiz/', AIQuizGenerateForNoteView.as_view(), name='generate-quiz-for-note'),
     path('<int:module_pk>/notes/generate-quiz/', AIQuizGenerateForMultipleNotesView.as_view(), name='generate-quiz-for-multiple-notes'),
     path('<int:module_pk>/notes/generated-quiz/', GeneratedQuizRetrieveView.as_view(), name='get-generated-quiz'),
+    path('quizzes/<int:quiz_id>/related-notes/', 
+         QuizRelatedNotesView.as_view(), 
+         name='quiz-related-notes'),
 ]
 

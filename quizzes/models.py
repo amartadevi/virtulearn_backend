@@ -5,6 +5,7 @@ from modules.models import Module
 from notes.models import Note
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
+import json
 
 class Quiz(models.Model):
     ASSIGNMENT = 'assignment'
@@ -34,6 +35,10 @@ class Quiz(models.Model):
     note = models.TextField(default="No notes available")
     content = models.TextField(default='no content given')
     is_ai_generated = models.BooleanField(default=False)
+    note_ids = models.TextField(null=True, blank=True)  # Store as JSON string
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.title
@@ -44,6 +49,14 @@ class Quiz(models.Model):
         if self.module.course.created_by != self.created_by:
             raise PermissionDenied("Only the course creator can create quizzes.")
         super().save(*args, **kwargs)
+
+    def set_note_ids(self, ids):
+        self.note_ids = json.dumps(ids)
+
+    def get_note_ids(self):
+        if self.note_ids:
+            return json.loads(self.note_ids)
+        return []
 
 class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')

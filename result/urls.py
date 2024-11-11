@@ -28,4 +28,7 @@ urlpatterns = [
     path('my-results/', 
          views.StudentQuizResultsView.as_view(), 
          name='student-quiz-results'),
+    path('<int:quiz_id>/student/<int:student_id>/suggestions/',
+         views.QuizSuggestionsView.as_view(),
+         name='quiz-suggestions'),
 ]
