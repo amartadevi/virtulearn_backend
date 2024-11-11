@@ -4,6 +4,11 @@ import logging
 from .models import Quiz, Question, StudentAnswer
 from .serializers import QuizSerializer, QuestionSerializer, StudentAnswerSerializer
 from .permissions import IsOwnerOrReadOnly
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import Quiz
+from result.models import QuizResult
 
 logger = logging.getLogger(__name__)
 
@@ -117,8 +122,8 @@ class AIQuizGenerateForMultipleNotesView(generics.CreateAPIView):
     serializer_class = QuizSerializer
 
     def post(self, request, module_pk):
-        note_ids = request.data.get("note_ids")
-
+        note_ids = request.data.get("note_ids", [])
+        
         if not note_ids:
             return Response(
                 {"error": "No note IDs provided."}, 
@@ -126,6 +131,12 @@ class AIQuizGenerateForMultipleNotesView(generics.CreateAPIView):
             )
 
         try:
+            # Convert note_ids to list if it's not already
+            if isinstance(note_ids, str):
+                note_ids = [int(id.strip()) for id in note_ids.split(',') if id.strip()]
+            elif isinstance(note_ids, int):
+                note_ids = [note_ids]
+            
             notes = Note.objects.filter(id__in=note_ids, module_id=module_pk)
 
             if not notes.exists():
@@ -134,26 +145,21 @@ class AIQuizGenerateForMultipleNotesView(generics.CreateAPIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            # Get note titles
             note_titles = [note.title for note in notes]
-            
-            # Initialize the AI quiz manager
-            ai_quiz_manager = AIQuizManager()
-
-            # Combine contents of the notes
             combined_content = " ".join([note.content for note in notes])
-
-            # Generate quiz based on the combined content
+            
+            ai_quiz_manager = AIQuizManager()
             quiz_content = ai_quiz_manager.generate_quiz(combined_content)
-
-            # Create a title that includes note names
             quiz_title = f"Quiz on: {', '.join(note_titles)}"
+
+            # Store note IDs as a list
+            note_ids_list = [note.id for note in notes]
 
             return Response({
                 "title": quiz_title,
                 "content": quiz_content,
                 "quiz_content": quiz_content,
-                "note_ids": note_ids,
+                "note_ids": note_ids_list,  # Send as a list
                 "note_titles": note_titles,
                 "is_ai_generated": True,
             }, status=status.HTTP_201_CREATED)
@@ -208,3 +214,30 @@ class GeneratedQuizRetrieveView(generics.RetrieveAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_quiz_result(request, quiz_id):
+    try:
+        quiz = Quiz.objects.get(id=quiz_id)
+        data = request.data
+        
+        # Create quiz result
+        result = QuizResult.objects.create(
+            quiz=quiz,
+            student=request.user,
+            score=int(data.get('score', 0)),
+            total_questions=int(data.get('total_questions', 0)),
+            percentage=float(data.get('percentage', 0)),
+            student_answers=data.get('student_answers', {})
+        )
+
+        return Response({
+            'message': 'Quiz result submitted successfully',
+            'result_id': result.id
+        }, status=201)
+    
+    except Quiz.DoesNotExist:
+        return Response({'error': 'Quiz not found'}, status=404)
+    except Exception as e:
+        print(f"Error in submit_quiz_result: {str(e)}")
+        return Response({'error': str(e)}, status=400)

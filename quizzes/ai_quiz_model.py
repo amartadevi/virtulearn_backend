@@ -1,3 +1,4 @@
+
 import g4f
 
 class AIQuizManager:
@@ -12,13 +13,16 @@ class AIQuizManager:
         C) Option C
         D) Option D
         Correct Answer: X
+        and also don't include any other text than the quiz questions and options and the correct answer, just the quiz questions and options and the correct answer
+        . don't ask any user input, just generate the quiz questions and options and the correct answer and 
+        follow only the format above and make sure don't gave me any other format than the one above
         """
         
         # Call the AI model
         response = g4f.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are an assistant that generates quizzes."},
+                {"role": "system", "content": "You are a quiz generator that always generates quizzes."},
                 {"role": "user", "content": prompt}
             ]
         )

@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'chat',
     'enrollments',
     'notes',
-    'results',
+    'result',
     'chatbot',
     
 ]
@@ -173,3 +173,6 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Add suggestion service settings
+SUGGESTION_SERVICE_URL = 'http://localhost:8000/api/suggestions'
